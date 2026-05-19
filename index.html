@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>부동산 경매 가상 입찰 훈련소 (v1)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Dark mode SaaS theme */
+      --bg-main: #0a0a0a;
+      --bg-sidebar: #111111;
+      --bg-card: #1a1a1a;
+      --bg-card-hover: #222222;
+      --text-main: #f0f0f0;
+      --text-muted: #a0a0a0;
+      --accent-neon: #3B82F6; /* Bright Blue */
+      --accent-blue: #00d2ff;
+      --border-color: #333333;
+      --danger: #ff4444;
+      --success: #00c851;
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      
+      --font-family: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main); 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color); 
+      border-radius: var(--radius-sm);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted); 
+    }
+
+    /* Auth Modal */
+    #auth-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .auth-box {
+      background: var(--bg-card);
+      padding: 40px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(59,130,246,0.1);
+    }
+    .auth-box h2 {
+      margin-bottom: 24px;
+      color: var(--accent-neon);
+      text-align: center;
+    }
+    .input-group {
+      margin-bottom: 16px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--accent-neon);
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 15px;
+    }
+    .btn-primary {
+      background: var(--accent-neon);
+      color: #FFFFFF;
+      box-shadow: 0 0 10px rgba(59,130,246,0.3);
+    }
+    .btn-primary:hover {
+      background: #2563EB;
+      box-shadow: 0 0 15px rgba(59,130,246,0.5);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      margin-top: 12px;
+    }
+    .btn-secondary:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .divider span {
+      padding: 0 10px;
+    }
+    
+    .btn-social {
+      background: var(--bg-main);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .btn-social:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+
+    /* Layout */
+    .sidebar {
+      width: 250px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-neon);
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(59,130,246,0.5);
+    }
+    .nav-menu {
+      list-style: none;
+      flex: 1;
+    }
+    .nav-item {
+      margin-bottom: 12px;
+    }
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+    .nav-btn.active {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent-neon);
+      border-left: 3px solid var(--accent-neon);
+    }
+    .logout-btn {
+      margin-top: auto;
+      color: var(--danger);
+    }
+    .logout-btn:hover {
+      background: rgba(255, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .header {
+      height: 70px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--accent-neon);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--accent-neon);
+    }
+
+    .content-area {
+      padding: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .card-title {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .card-value.highlight {
+      color: var(--accent-neon);
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--bg-main);
+      border-radius: 3px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-neon);
+      width: 60%;
+      box-shadow: 0 0 10px var(--accent-neon);
+      transition: width 0.3s ease;
+    }
+
+    /* Views */
+    .view-section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Home Dashboard Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: var(--accent-neon);
+      border-radius: 2px;
+    }
+    
+    .task-card {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .task-card:hover {
+      border-color: var(--accent-neon);
+      background: var(--bg-card-hover);
+    }
+    .tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tag.win { background: rgba(0, 200, 81, 0.1); color: var(--success); border: 1px solid rgba(0, 200, 81, 0.3); }
+    .tag.lose { background: rgba(255, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(255, 68, 68, 0.3); }
+
+    .recent-list {
+      list-style: none;
+    }
+    .recent-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .recent-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Concept Study View */
+    .article-box {
+      background: var(--bg-card);
+      padding: 40px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      font-size: 16px;
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+    .article-box h3 { margin-bottom: 20px; color: var(--accent-neon); }
+    
+    .glossary-term {
+      color: var(--accent-blue);
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      cursor: help;
+      transition: color 0.2s;
+    }
+    .glossary-term:hover {
+      color: var(--accent-neon);
+    }
+
+    .quiz-box {
+      background: var(--bg-main);
+      padding: 30px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+    .quiz-options {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .quiz-option {
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quiz-option:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+    }
+    .quiz-option.correct {
+      border-color: var(--success);
+      background: rgba(0, 200, 81, 0.1);
+    }
+    .quiz-option.wrong {
+      border-color: var(--danger);
+      background: rgba(255, 68, 68, 0.1);
+    }
+    #quiz-feedback {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+
+    /* Bidding Training View */
+    .property-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .property-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .property-img-placeholder {
+      height: 160px;
+      background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .property-info {
+      padding: 20px;
+      flex: 1;
+    }
+    .property-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .price-label { color: var(--text-muted); }
+    .price-value { font-weight: 600; }
+    .bid-input-group {
+      margin-top: 20px;
+      display: flex;
+      gap: 8px;
+    }
+    .bid-input {
+      flex: 1;
+      padding: 10px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: var(--radius-sm);
+    }
+    .bid-input:focus { border-color: var(--accent-neon); outline: none; }
+    
+    /* Glossary Popup */
+    #glossary-popup {
+      position: absolute;
+      background: var(--bg-card);
+      border: 1px solid var(--accent-blue);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      max-width: 300px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: none;
+      pointer-events: none;
+    }
+    #glossary-popup h4 { color: var(--accent-blue); margin-bottom: 8px; }
+    #glossary-popup p { font-size: 14px; color: var(--text-muted); }
+
+    /* Bid Result Modal */
+    #result-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .result-box {
+      background: var(--bg-card);
+      padding: 40px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      border: 1px solid var(--border-color);
+      width: 400px;
+    }
+    .result-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .result-title { font-size: 24px; margin-bottom: 12px; }
+    .result-desc { color: var(--text-muted); margin-bottom: 24px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay">
+    <div class="auth-box">
+      <h2>VIRTUAL BIDDING</h2>
+      <div id="auth-error" style="color: var(--danger); margin-bottom: 12px; font-size: 14px; text-align: center; display: none;"></div>
+      <div class="input-group">
+        <label for="email">이메일</label>
+        <input type="email" id="email" placeholder="user@example.com">
+      </div>
+      <div class="input-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="handleLogin()">로그인 시작하기</button>
+      <button class="btn btn-secondary" onclick="handleSignup()">새 계정 만들기</button>
+
+      <div class="divider"><span>또는 소셜 로그인</span></div>
+      
+      <button class="btn btn-social" onclick="handleSocialLogin('google')">
+        <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Google로 계속하기
+      </button>
+      <button class="btn btn-social" onclick="handleSocialLogin('apple')">
+        <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.689.827-1.35 2.282-1.155 3.64 1.35.104 2.697-.624 3.442-1.628z"/></svg>
+        Apple로 계속하기
+      </button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon"></div>
+      경매 훈련소
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <button class="nav-btn active" onclick="switchView('home')">메인 홈</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-btn" onclick="switchView('study')">개념 공부하기</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-btn" onclick="switchView('bid')">가상 입찰 훈련소</button>
+      </li>
+    </ul>
+    <button class="nav-btn logout-btn" onclick="handleLogout()">로그아웃</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <div>
+        <h2 style="font-size: 18px; font-weight: 500;">환영합니다, <span id="header-email" style="color: var(--accent-neon);">User</span>님!</h2>
+      </div>
+      <div class="user-info">
+        <span style="color: var(--text-muted); font-size: 14px;">Lv. <span id="header-level">1</span></span>
+        <div class="avatar" id="avatar-initial">U</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="summary-grid">
+        <div class="card">
+          <div class="card-title">나의 레벨</div>
+          <div class="card-value highlight" id="stat-level">Lv. 1 초보 입찰자</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="stat-progress"></div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">연속 학습: <span id="stat-streak" style="color:var(--text-main)">3일</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">퀴즈 완료 개수</div>
+          <div class="card-value" id="stat-quiz">0</div>
+        </div>
+        <div class="card">
+          <div class="card-title">입찰 참여 횟수</div>
+          <div class="card-value" id="stat-bid">0</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">낙찰 성공률: <span id="stat-winrate" style="color:var(--success)">0%</span></div>
+        </div>
+      </div>
+
+      <!-- View 1: Home -->
+      <div id="view-home" class="view-section active">
+        <div class="dashboard-grid">
+          <div>
+            <h3 class="section-title">오늘 할 것</h3>
+            <div class="task-card" onclick="switchView('study')">
+              <div>
+                <h4 style="margin-bottom: 4px;">개념 공부: 권리분석의 기초</h4>
+                <p style="font-size: 14px; color: var(--text-muted);">말소기준권리를 찾고 인수되는 권리를 파악하세요.</p>
+              </div>
+              <div class="btn btn-primary" style="width: auto; padding: 8px 16px;">바로가기</div>
+            </div>
+            <div class="task-card" onclick="switchView('bid')">
+              <div>
+                <h4 style="margin-bottom: 4px;">가상 입찰: 은마아파트 30평형</h4>
+                <p style="font-size: 14px; color: var(--text-muted);">감정가 대비 최저입찰가 메리트를 분석하고 입찰가를 산정하세요.</p>
+              </div>
+              <div class="btn btn-primary" style="width: auto; padding: 8px 16px;">바로가기</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="section-title">최근 입찰 기록</h3>
+            <ul class="recent-list" id="recent-bids-list">
+              <li class="recent-item" style="color: var(--text-muted); text-align: center; font-size: 14px; border:none;">기록이 없습니다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 2: Study -->
+      <div id="view-study" class="view-section">
+        <h3 class="section-title">개념 배움터</h3>
+        <div class="article-box content-with-glossary">
+          <h3>권리분석의 핵심: 말소기준권리</h3>
+          <p>경매에서 가장 중요한 것은 <span class="glossary-term">권리분석</span>입니다. 등기부등본을 볼 때, 낙찰자에게 인수되는 권리와 소멸되는 권리를 구분해야 합니다.</p>
+          <br>
+          <p>그 기준이 되는 것이 바로 <span class="glossary-term">말소기준권리</span>입니다. 대표적으로 <span class="glossary-term">근저당</span>, 가압류, 담보가등기, 강제경매개시결정등기 등이 있습니다. 이 권리를 포함하여 그 이후에 설정된 모든 권리는 매각으로 소멸되며, 이전 권리는 인수됩니다.</p>
+          <br>
+          <p>또한, 임차인의 <span class="glossary-term">전세권</span>이나 대항력 여부도 반드시 확인해야 온전한 <span class="glossary-term">명도</span>가 가능합니다.</p>
+        </div>
+
+        <div class="quiz-box">
+          <h4 style="margin-bottom: 16px; font-size: 18px;">미니 퀴즈</h4>
+          <p>다음 중 일반적으로 말소기준권리가 될 수 <strong>없는</strong> 것은 무엇일까요?</p>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="selectQuiz(this, false)">1. 근저당</div>
+            <div class="quiz-option" onclick="selectQuiz(this, false)">2. 가압류</div>
+            <div class="quiz-option" onclick="selectQuiz(this, true)">3. 소유권이전청구권가등기 (담보가등기가 아닌 보전가등기)</div>
+            <div class="quiz-option" onclick="selectQuiz(this, false)">4. 강제경매개시결정등기</div>
+          </div>
+          <div id="quiz-feedback"></div>
+        </div>
+      </div>
+
+      <!-- View 3: Bid -->
+      <div id="view-bid" class="view-section">
+        <h3 class="section-title">가상 입찰 훈련소</h3>
+        <div class="property-grid" id="property-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Glossary Popup -->
+  <div id="glossary-popup">
+    <h4 id="glossary-title">단어</h4>
+    <p id="glossary-desc">설명</p>
+  </div>
+
+  <!-- Result Modal -->
+  <div id="result-modal">
+    <div class="result-box">
+      <div class="result-icon" id="result-icon">🎉</div>
+      <h3 class="result-title" id="result-title">낙찰 성공!</h3>
+      <p class="result-desc" id="result-desc">축하합니다. 적절한 가격에 낙찰받았습니다.</p>
+      <button class="btn btn-primary" onclick="closeResultModal()">확인</button>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. State & Data (LocalStorage) ---
+    let currentUser = null;
+    let userStats = { level: 1, quizCompleted: 0, bidCount: 0, winCount: 0 };
+    let bidHistory = [];
+
+    const STORAGE_KEY_USER = 'vibe_user';
+    const STORAGE_KEY_STATS = 'vibe_stats';
+    const STORAGE_KEY_BIDS = 'vibe_bids';
+
+    function saveData() {
+      if(currentUser) localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+      localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(userStats));
+      localStorage.setItem(STORAGE_KEY_BIDS, JSON.stringify(bidHistory));
+    }
+
+    function loadData() {
+      const storedUser = localStorage.getItem(STORAGE_KEY_USER);
+      const storedStats = localStorage.getItem(STORAGE_KEY_STATS);
+      const storedBids = localStorage.getItem(STORAGE_KEY_BIDS);
+
+      if(storedUser) currentUser = JSON.parse(storedUser);
+      if(storedStats) userStats = JSON.parse(storedStats);
+      if(storedBids) bidHistory = JSON.parse(storedBids);
+    }
+
+    const glossary = {
+      '말소기준권리': '부동산 경매에서 낙찰 시 인수주의와 잉여주의를 가르는 기준이 되는 권리입니다.',
+      '권리분석': '경매 목적물에 설정된 권리의 인수 여부를 분석하여 위험을 회피하는 과정입니다.',
+      '감정가': '감정평가사가 해당 부동산의 가치를 평가한 금액입니다.',
+      '최저입찰가': '경매 법원에서 정한, 입찰할 수 있는 가장 낮은 금액입니다.',
+      '낙찰': '경매에서 최고가 매수신고인으로 결정되어 해당 물건을 살 권리를 얻는 것입니다.',
+      '패찰': '경매에 참여했으나 최고가를 쓰지 못해 탈락하는 것입니다.',
+      '유찰': '경매기일에 입찰자가 아무도 없어 낙찰되지 않고 다음 기일로 미뤄지는 것입니다.',
+      '배당': '낙찰대금으로 채권자들에게 순위에 따라 돈을 나누어 주는 절차입니다.',
+      '명도': '낙찰 후 현재 점유자(채무자, 세입자 등)를 내보내고 부동산을 인도받는 과정입니다.',
+      '등기부등본': '부동산의 권리관계를 공시하는 공적 장부입니다.',
+      '근저당': '계속적인 거래관계에서 발생하는 불특정 다수의 채권을 장래의 결산기에 일정한 한도액까지 담보하기 위해 설정하는 저당권입니다.',
+      '전세권': '전세금을 지급하고 타인의 부동산을 용도에 따라 사용, 수익하는 권리입니다.'
+    };
+
+    const virtualProperties = [
+      { id: 1, name: '서울 서초구 아파트 34평', appraised: 1500000000, minimum: 1200000000, registry: '근저당 1건, 안전', winningBid: 1250000000 },
+      { id: 2, name: '경기 성남시 오피스텔', appraised: 300000000, minimum: 210000000, registry: '임차인 대항력 있음 (주의)', winningBid: 215000000 },
+      { id: 3, name: '부산 해운대구 상가', appraised: 800000000, minimum: 512000000, registry: '유치권 신고 있음', winningBid: 530000000 },
+      { id: 4, name: '인천 연수구 빌라', appraised: 250000000, minimum: 175000000, registry: '권리관계 깨끗함', winningBid: 190000000 },
+      { id: 5, name: '서울 강남구 다세대', appraised: 600000000, minimum: 480000000, registry: '전세권 설정, 말소기준권리 이전', winningBid: 495000000 }
+    ];
+
+    // --- 2. Auth Logic ---
+    function handleLogin() {
+      const email = document.getElementById('email').value || 'guest@example.com';
+      currentUser = { email: email };
+      saveData();
+      finishAuth();
+    }
+
+    function handleSignup() {
+      const email = document.getElementById('email').value || 'newuser@example.com';
+      currentUser = { email: email };
+      userStats = { level: 1, quizCompleted: 0, bidCount: 0, winCount: 0 };
+      bidHistory = [];
+      saveData();
+      finishAuth();
+    }
+
+    function handleSocialLogin(provider) {
+      currentUser = { email: `user@${provider}.com` };
+      saveData();
+      finishAuth();
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      localStorage.removeItem(STORAGE_KEY_USER);
+      document.getElementById('auth-overlay').style.display = 'flex';
+      document.getElementById('email').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    function finishAuth() {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('header-email').textContent = currentUser.email.split('@')[0];
+      document.getElementById('avatar-initial').textContent = currentUser.email.charAt(0).toUpperCase();
+      updateDashboardStats();
+      renderRecentBids();
+    }
+
+    function checkAuthOnLoad() {
+      loadData();
+      if(currentUser) {
+        finishAuth();
+      } else {
+        document.getElementById('auth-overlay').style.display = 'flex';
+      }
+    }
+
+    // --- 4. Navigation ---
+    function switchView(viewId) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(`view-${viewId}`).classList.add('active');
+      
+      const navBtns = document.querySelectorAll('.nav-menu .nav-btn');
+      if(viewId === 'home') navBtns[0].classList.add('active');
+      if(viewId === 'study') navBtns[1].classList.add('active');
+      if(viewId === 'bid') navBtns[2].classList.add('active');
+    }
+
+    // --- 5. Glossary Logic ---
+    function initGlossary() {
+      const container = document.querySelector('.content-with-glossary');
+      let html = container.innerHTML;
+      
+      Object.keys(glossary).forEach(term => {
+        const regex = new RegExp(`(?<!<[^>]*)\\b(${term})\\b`, 'g');
+        html = html.replace(regex, `<span class="glossary-term" data-term="$1">$1</span>`);
+      });
+      container.innerHTML = html;
+
+      const popup = document.getElementById('glossary-popup');
+      const title = document.getElementById('glossary-title');
+      const desc = document.getElementById('glossary-desc');
+
+      document.querySelectorAll('.glossary-term').forEach(el => {
+        el.addEventListener('mouseenter', (e) => {
+          const term = e.target.getAttribute('data-term');
+          title.textContent = term;
+          desc.textContent = glossary[term];
+          
+          const rect = e.target.getBoundingClientRect();
+          popup.style.display = 'block';
+          popup.style.top = `${rect.bottom + window.scrollY + 10}px`;
+          popup.style.left = `${rect.left + window.scrollX}px`;
+        });
+        
+        el.addEventListener('mouseleave', () => {
+          popup.style.display = 'none';
+        });
+      });
+    }
+
+    // --- 4. Study & Quiz Logic ---
+    function selectQuiz(el, isCorrect) {
+      document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.classList.remove('correct', 'wrong');
+        opt.style.pointerEvents = 'none';
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      feedback.style.display = 'block';
+
+      if(isCorrect) {
+        el.classList.add('correct');
+        feedback.style.background = 'rgba(0, 200, 81, 0.1)';
+        feedback.style.border = '1px solid var(--success)';
+        feedback.innerHTML = '<strong style="color:var(--success)">정답입니다!</strong> 보전가등기는 소유권을 넘겨받기 위한 가등기로, 경매에서 무조건 소멸되는 말소기준권리가 아닙니다.';
+        
+        userStats.quizCompleted++;
+        if(userStats.quizCompleted % 3 === 0) userStats.level++; 
+        
+        saveData();
+        updateDashboardStats();
+        
+      } else {
+        el.classList.add('wrong');
+        feedback.style.background = 'rgba(255, 68, 68, 0.1)';
+        feedback.style.border = '1px solid var(--danger)';
+        feedback.innerHTML = '<strong style="color:var(--danger)">오답입니다.</strong> 해설: 근저당, 가압류, 담보가등기, 강제경매개시결정등기는 대표적인 말소기준권리입니다. 다시 한번 복습해보세요!';
+        
+        setTimeout(() => {
+          document.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.classList.remove('wrong');
+            opt.style.pointerEvents = 'auto';
+          });
+          feedback.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // --- 7. Bidding Logic ---
+    function renderProperties() {
+      const grid = document.getElementById('property-grid');
+      grid.innerHTML = virtualProperties.map(p => `
+        <div class="property-card">
+          <div class="property-img-placeholder">
+            🏢 가상 매물 #${p.id}
+          </div>
+          <div class="property-info">
+            <h4 class="property-title">${p.name}</h4>
+            <div class="price-row">
+              <span class="price-label">감정가</span>
+              <span class="price-value">${(p.appraised/100000000).toFixed(1)}억 원</span>
+            </div>
+            <div class="price-row">
+              <span class="price-label">최저입찰가</span>
+              <span class="price-value" style="color:var(--danger)">${(p.minimum/100000000).toFixed(1)}억 원</span>
+            </div>
+            <div class="price-row">
+              <span class="price-label">등기부 현황</span>
+              <span class="price-value" style="font-size:12px; color:var(--text-muted)">${p.registry}</span>
+            </div>
+            
+            <div class="bid-input-group">
+              <input type="number" id="bid-price-${p.id}" class="bid-input" placeholder="입찰가 입력 (만원 단위)">
+              <button class="btn btn-primary" style="width:80px" onclick="submitBid(${p.id})">입찰</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function submitBid(propertyId) {
+      const input = document.getElementById(`bid-price-${propertyId}`);
+      const bidAmountRaw = parseInt(input.value);
+      
+      if(!bidAmountRaw || isNaN(bidAmountRaw)) {
+        alert("유효한 입찰가를 입력해주세요.");
+        return;
+      }
+      
+      const bidAmount = bidAmountRaw * 10000;
+      const property = virtualProperties.find(p => p.id === propertyId);
+      
+      let isWin = false;
+      let title = "";
+      let desc = "";
+      let icon = "";
+
+      if(bidAmount < property.minimum) {
+        title = "패찰 (무효)";
+        desc = "최저입찰가보다 낮게 쓰셨습니다.";
+        icon = "❌";
+      } else if(bidAmount >= property.winningBid) {
+        isWin = true;
+        title = "낙찰 성공! 🎉";
+        const yield = ((property.appraised - bidAmount) / bidAmount * 100).toFixed(1);
+        desc = \`내부 경쟁자(가상 낙찰가 \${(property.winningBid/100000000).toFixed(1)}억)를 이겼습니다! 예상 시세차익 수익률: \${yield}%\`;
+        icon = "🏆";
+      } else {
+        title = "패찰 😢";
+        desc = \`경쟁자가 \${(property.winningBid/100000000).toFixed(1)}억에 낙찰받았습니다. 너무 낮게 쓰셨네요.\`;
+        icon = "📉";
+      }
+
+      document.getElementById('result-icon').textContent = icon;
+      document.getElementById('result-title').textContent = title;
+      document.getElementById('result-desc').textContent = desc;
+      document.getElementById('result-modal').style.display = 'flex';
+
+      userStats.bidCount++;
+      if(isWin) userStats.winCount++;
+      
+      const newBid = { 
+        property_name: property.name, 
+        bid_amount: bidAmount, 
+        is_win: isWin, 
+        created_at: new Date().toISOString() 
+      };
+      bidHistory.unshift(newBid);
+      if(bidHistory.length > 3) bidHistory.pop();
+
+      saveData();
+
+      updateDashboardStats();
+      renderRecentBids();
+      input.value = '';
+    }
+
+    function closeResultModal() {
+      document.getElementById('result-modal').style.display = 'none';
+    }
+
+    // --- 8. Dashboard Updates ---
+    function updateDashboardStats() {
+      document.getElementById('header-level').textContent = userStats.level;
+      document.getElementById('stat-level').textContent = \`Lv. \${userStats.level} 초보 입찰자\`;
+      document.getElementById('stat-progress').style.width = \`\${(userStats.quizCompleted % 3) * 33.3}%\`;
+      
+      document.getElementById('stat-quiz').textContent = userStats.quizCompleted;
+      document.getElementById('stat-bid').textContent = userStats.bidCount;
+      
+      const winRate = userStats.bidCount > 0 ? Math.round((userStats.winCount / userStats.bidCount) * 100) : 0;
+      document.getElementById('stat-winrate').textContent = \`\${winRate}%\`;
+      
+      if(winRate >= 50) document.getElementById('stat-winrate').style.color = 'var(--success)';
+      else document.getElementById('stat-winrate').style.color = 'var(--danger)';
+    }
+
+    function renderRecentBids() {
+      const list = document.getElementById('recent-bids-list');
+      if(bidHistory.length === 0) {
+        list.innerHTML = '<li class="recent-item" style="color: var(--text-muted); text-align: center; font-size: 14px; border:none;">기록이 없습니다.</li>';
+        return;
+      }
+      
+      list.innerHTML = bidHistory.map(b => \`
+        <li class="recent-item">
+          <div>
+            <div style="font-weight: 500;">\${b.property_name}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">\${(b.bid_amount/100000000).toFixed(2)}억 원 입찰</div>
+          </div>
+          <div class="tag \${b.is_win ? 'win' : 'lose'}">
+            \${b.is_win ? '낙찰' : '패찰'}
+          </div>
+        </li>
+      \`).join('');
+    }
+
+    // Initialize
+    window.onload = () => {
+      initGlossary();
+      renderProperties();
+      checkAuthOnLoad();
+    };
+
+  </script>
+</body>
+</html>
