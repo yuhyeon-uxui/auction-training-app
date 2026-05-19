@@ -1,6 +1,6 @@
 # 프로젝트 진행 상황 (Task Tracking)
 
-## v2
+## v1 배우는 앱
 - [x] 시나리오를 기반으로 서비스를 구체화하기 (총 7개 시나리오 앱 내 구현 완료)
 - [x] 필요한 기술 스택과 난이도 명시하기 (`implementation_plan.md`에 작성 완료)
 - [x] 각 기술이 어떤 부분이 필요한지 설명하기 (`implementation_plan.md`에 작성 완료)
