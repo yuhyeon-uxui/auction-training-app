@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 import GlossaryPopup from './components/GlossaryPopup';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -36,16 +37,19 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex h-screen overflow-hidden bg-bg-main text-text-main">
+      <div className="flex h-screen overflow-hidden bg-bg-main text-text-main font-['Inter']">
         <Sidebar onLogout={() => supabase.auth.signOut()} />
-        <div className="flex-1 overflow-y-auto">
-          <Routes>
-            <Route path="/" element={<Home session={session} />} />
-            <Route path="/study" element={<Study session={session} />} />
-            <Route path="/bid" element={<Bidding session={session} />} />
-            <Route path="/profile" element={<Profile session={session} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          <Header session={session} />
+          <div className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Home session={session} />} />
+              <Route path="/study" element={<Study session={session} />} />
+              <Route path="/bid" element={<Bidding session={session} />} />
+              <Route path="/profile" element={<Profile session={session} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
         </div>
         <GlossaryPopup />
       </div>
