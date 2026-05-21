@@ -40,6 +40,11 @@ export default function Login() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="card-style w-[400px]">
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={() => window.location.href = '/'} className="text-sm text-text-muted hover:text-white flex items-center gap-1">
+            <span>←</span> 메인으로
+          </button>
+        </div>
         <h2 className="text-2xl font-bold text-accent-blue text-center mb-6">VIRTUAL BIDDING</h2>
         {error && <div className="text-danger text-sm mb-4 text-center">{error}</div>}
         

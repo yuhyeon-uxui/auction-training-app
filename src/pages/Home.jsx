@@ -9,19 +9,40 @@ export default function Home({ session }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProfile();
-    fetchRecentBids();
-  }, []);
+    if (session) {
+      fetchProfile();
+      fetchRecentBids();
+    }
+  }, [session]);
 
   const fetchProfile = async () => {
+    if (!session?.user?.id) return;
     const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     if (data) setProfile(data);
   };
 
   const fetchRecentBids = async () => {
+    if (!session?.user?.id) return;
     const { data } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(3);
     if (data) setRecentBids(data);
   };
+
+  if (!session) {
+    return (
+      <div className="p-10 max-w-6xl mx-auto flex flex-col items-center justify-center text-center min-h-[70vh]">
+        <div className="text-6xl mb-6">🏘️</div>
+        <h1 className="text-4xl font-extrabold text-white mb-6 leading-tight">
+          실전 감각을 키우는 <br/><span className="text-accent-blue text-5xl">가상 부동산 경매 훈련소</span>
+        </h1>
+        <p className="text-lg text-text-muted mb-10 max-w-2xl">
+          위험 부담 없이 실제 경매 데이터를 바탕으로 모의 입찰을 연습하고, 권리분석 능력을 키워보세요.
+        </p>
+        <button onClick={() => navigate('/login')} className="px-8 py-4 bg-accent-blue hover:bg-blue-600 text-white font-bold rounded-xl text-lg transition-transform hover:scale-105 shadow-[0_0_20px_rgba(59,130,246,0.5)]">
+          무료로 시작하기
+        </button>
+      </div>
+    );
+  }
 
   if (!profile) return <div className="p-10 text-text-muted animate-pulse">데이터를 불러오는 중입니다...</div>;
 

@@ -24,11 +24,11 @@ export default function Header({ session }) {
         </button>
         <div className="flex items-center gap-3 pl-5 border-l border-gray-800">
           <div className="text-sm font-medium hidden sm:block text-right">
-            <div className="text-white">{session?.user?.email?.split('@')[0]}</div>
-            <div className="text-xs text-text-muted">예비 입찰자</div>
+            <div className="text-white">{session?.user?.email?.split('@')[0] || '비회원'}</div>
+            <div className="text-xs text-text-muted">{session ? '예비 입찰자' : '로그인이 필요합니다'}</div>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent-blue to-accent-light flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(59,130,246,0.4)] cursor-pointer hover:scale-105 transition-transform">
-            {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+            {session?.user?.email?.charAt(0).toUpperCase() || '?'}
           </div>
         </div>
       </div>

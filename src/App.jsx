@@ -15,8 +15,9 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) console.error('Supabase session error:', error);
+      setSession(data?.session || null);
       setLoading(false);
     });
 
@@ -31,28 +32,29 @@ function App() {
 
   if (loading) return null;
 
-  if (!session) {
-    return <Login />;
-  }
-
   return (
     <BrowserRouter>
-      <div className="flex h-screen overflow-hidden bg-bg-main text-text-main font-['Inter']">
-        <Sidebar onLogout={() => supabase.auth.signOut()} />
-        <div className="flex-1 flex flex-col relative overflow-hidden">
-          <Header session={session} />
-          <div className="flex-1 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<Home session={session} />} />
-              <Route path="/study" element={<Study session={session} />} />
-              <Route path="/bid" element={<Bidding session={session} />} />
-              <Route path="/profile" element={<Profile session={session} />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+      <Routes>
+        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="*" element={
+          <div className="flex h-screen overflow-hidden bg-bg-main text-text-main font-['Inter']">
+            <Sidebar onLogout={() => supabase.auth.signOut()} session={session} />
+            <div className="flex-1 flex flex-col relative overflow-hidden">
+              <Header session={session} />
+              <div className="flex-1 overflow-y-auto">
+                <Routes>
+                  <Route path="/" element={<Home session={session} />} />
+                  <Route path="/study" element={session ? <Study session={session} /> : <Navigate to="/login" />} />
+                  <Route path="/bid" element={session ? <Bidding session={session} /> : <Navigate to="/login" />} />
+                  <Route path="/profile" element={session ? <Profile session={session} /> : <Navigate to="/login" />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
+            </div>
+            <GlossaryPopup />
           </div>
-        </div>
-        <GlossaryPopup />
-      </div>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-export default function Sidebar({ onLogout }) {
+export default function Sidebar({ onLogout, session }) {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const navItems = [
     { path: '/', label: '메인 홈' },
@@ -37,9 +38,15 @@ export default function Sidebar({ onLogout }) {
         })}
       </ul>
       
-      <button onClick={onLogout} className="mt-auto w-full text-left px-4 py-3 text-sm font-medium text-danger hover:bg-danger/10 rounded-lg transition-colors border-l-4 border-transparent">
-        로그아웃
-      </button>
+      {session ? (
+        <button onClick={onLogout} className="mt-auto w-full text-left px-4 py-3 text-sm font-medium text-danger hover:bg-danger/10 rounded-lg transition-colors border-l-4 border-transparent">
+          로그아웃
+        </button>
+      ) : (
+        <button onClick={() => navigate('/login')} className="mt-auto w-full text-center px-4 py-3 text-sm font-medium text-white bg-accent-blue hover:bg-blue-600 rounded-lg transition-colors shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+          로그인 / 가입하기
+        </button>
+      )}
     </div>
   );
 }
