@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export default function Header({ session, toggleMenu }) {
   const location = useLocation();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   
   const getPageTitle = () => {
     switch(location.pathname) {
@@ -32,10 +34,33 @@ export default function Header({ session, toggleMenu }) {
       
       <div className="flex items-center gap-5">
         {session && (
-          <button onClick={() => alert("현재 도착한 새 알림이 없습니다. 📭")} className="relative p-2 text-text-muted hover:text-white transition-colors duration-300 cursor-pointer">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-accent-blue rounded-full border-2 border-bg-main shadow-[0_0_8px_#3B82F6]"></span>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsNotifOpen(!isNotifOpen)} 
+              className={`p-2 transition-colors duration-300 cursor-pointer rounded-full ${isNotifOpen ? 'bg-gray-800 text-white' : 'text-text-muted hover:text-white hover:bg-gray-800/50'}`}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              {/* <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-accent-blue rounded-full border-2 border-bg-main shadow-[0_0_8px_#3B82F6]"></span> */}
+            </button>
+
+            {isNotifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                <div className="absolute right-0 mt-3 w-80 bg-bg-card border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in-up origin-top-right">
+                  <div className="p-4 border-b border-gray-800 flex items-center justify-between bg-bg-main/50">
+                    <h3 className="font-bold text-white text-lg">알림</h3>
+                  </div>
+                  <div className="p-10 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mb-4 border border-gray-700/50 shadow-inner">
+                      <span className="text-3xl grayscale opacity-50">📭</span>
+                    </div>
+                    <p className="text-white font-bold mb-1">도착한 알림이 없어요</p>
+                    <p className="text-sm text-text-muted">새로운 소식이 생기면 알려드릴게요!</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
         <div className={`flex items-center gap-3 ${session ? 'pl-5 border-l border-gray-800' : ''}`}>
           <div className="text-sm font-medium hidden sm:block text-right">
