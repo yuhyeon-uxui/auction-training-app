@@ -310,7 +310,7 @@ export default function Bidding({ session }) {
       competitors
     });
 
-    await supabase.from('bid_history').insert([{
+    const { error: insertError } = await supabase.from('bid_history').insert([{
       user_id: session.user.id,
       property_id: selectedProperty.id,
       item_name: selectedProperty.name,
@@ -320,6 +320,11 @@ export default function Bidding({ session }) {
       result: resStatus === 'win' ? 'win' : 'lose',
       profit_rate: isWin ? profitRate : 0
     }]);
+
+    if (insertError) {
+      console.error('Bid insert error:', insertError);
+      alert('⚠️ 기록 저장에 실패했습니다. (Supabase 권한 또는 스키마 오류일 수 있습니다): ' + insertError.message);
+    }
 
     if (isWin && !completedPropertyIds.includes(selectedProperty.id)) {
       setCompletedPropertyIds([...completedPropertyIds, selectedProperty.id]);
