@@ -22,6 +22,7 @@ export default function Home({ session }) {
     if (!session?.user?.id) return;
     const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     if (data) setProfile(data);
+    else setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
   };
 
   const fetchRecentBids = async () => {

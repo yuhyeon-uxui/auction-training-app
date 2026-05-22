@@ -24,6 +24,9 @@ export default function Profile({ session }) {
     if (prof) {
       setProfile(prof);
       setLevelData(prof.level_history || [{ level: 1, date: prof.created_at }]);
+    } else {
+      setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+      setLevelData([{ level: 1, date: new Date().toISOString() }]);
     }
 
     // 2. Fetch Bids for Accuracy, WinRate, and List
