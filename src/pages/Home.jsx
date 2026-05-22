@@ -300,7 +300,7 @@ export default function Home({ session }) {
   return (
     <div className="p-10 max-w-6xl mx-auto">
       <div className="mb-10">
-        <h2 className="text-3xl font-bold mb-2">환영합니다, <span className="text-accent-blue">{session.user.email?.split('@')[0]}</span>님! 👋</h2>
+        <h2 className="text-3xl font-bold mb-2">환영합니다, <span className="text-accent-blue">{session.user.user_metadata?.nickname || session.user.email?.split('@')[0]}</span>님! 👋</h2>
         <p className="text-text-muted text-lg">오늘도 경매 실전 감각을 키워볼까요?</p>
       </div>
 
