@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const glossaryData = {
   '말소기준권리': '부동산 경매에서 낙찰 시 인수주의와 잉여주의를 가르는 기준이 되는 권리입니다.',
@@ -21,6 +22,8 @@ const glossaryData = {
 
 export default function GlossaryPopup() {
   const [popup, setPopup] = useState({ show: false, x: 0, y: 0, term: '', desc: '' });
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const handleTrigger = (e) => {
@@ -50,25 +53,77 @@ export default function GlossaryPopup() {
       }
     };
 
-    const handleClickOutside = (e) => {
+    const handleGlobalClick = (e) => {
+      // If clicking outside popup and not on a term, close it
       if (!e.target.closest('.glossary-popup-container') && !e.target.closest('.glossary-term')) {
         setPopup(p => ({ ...p, show: false }));
       }
+      
+      // If clicking on a term, trigger popup
+      if (e.target.closest('.glossary-term')) {
+        handleTrigger(e);
+      }
     };
 
-    const terms = document.querySelectorAll('.glossary-term');
-    terms.forEach(term => {
-      term.addEventListener('click', handleTrigger);
-    });
+    const handleScroll = () => {
+      setPopup(p => ({ ...p, show: false }));
+    };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('click', handleGlobalClick);
+    window.addEventListener('scroll', handleScroll, true); // Use capture to catch inner container scrolls
+    
     return () => {
-      terms.forEach(term => {
-        term.removeEventListener('click', handleTrigger);
-      });
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, []);
+
+  useEffect(() => {
+    if (popup.show) {
+      checkIfSaved();
+    }
+  }, [popup.show, popup.term]);
+
+  const checkIfSaved = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('saved_terms')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('term', popup.term)
+      .single();
+      
+    setIsSaved(!!data);
+  };
+
+  const handleSaveToggle = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    setIsSaving(true);
+    if (isSaved) {
+      await supabase
+        .from('saved_terms')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('term', popup.term);
+      setIsSaved(false);
+    } else {
+      const { error } = await supabase
+        .from('saved_terms')
+        .insert([{ user_id: user.id, term: popup.term }]);
+      if (!error) setIsSaved(true);
+    }
+    setIsSaving(false);
+    
+    // Dispatch custom event to notify Study.jsx
+    window.dispatchEvent(new Event('glossaryUpdated'));
+  };
 
   if (!popup.show) return null;
 
@@ -81,9 +136,19 @@ export default function GlossaryPopup() {
         <h4 className="text-accent-blue font-bold flex items-center gap-2">
           <span className="text-lg">📖</span> {popup.term}
         </h4>
-        <button onClick={() => setPopup(p => ({...p, show: false}))} className="text-text-muted hover:text-white p-1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={handleSaveToggle} 
+            disabled={isSaving}
+            className={`p-1.5 rounded hover:bg-gray-800 transition-colors ${isSaved ? 'text-accent-blue' : 'text-gray-500 hover:text-white'}`}
+            title="단어장에 저장"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
+          <button onClick={() => setPopup(p => ({...p, show: false}))} className="text-text-muted hover:text-white p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
       </div>
       <p className="text-sm text-text-muted leading-relaxed break-keep">{popup.desc}</p>
     </div>

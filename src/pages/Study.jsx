@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const modules = [
@@ -114,15 +114,62 @@ const modules = [
   }
 ];
 
+const categories = [
+  { id: 'auction', label: '경매', active: true },
+  { id: 'rental', label: '임대사업', active: false },
+  { id: 'trade', label: '갈아타기', active: false },
+  { id: 'cheongyak', label: '청약', active: false },
+];
+
+const coreTerms = ['말소기준권리', '대항력', '최저입찰가', '명도', '유치권'];
+
 export default function Study({ session }) {
   const [activeModule, setActiveModule] = useState(null);
   const [feedback, setFeedback] = useState({});
   const [completedQuizzes, setCompletedQuizzes] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState('auction');
+  const [savedTerms, setSavedTerms] = useState([]);
+
+  useEffect(() => {
+    if (session) {
+      fetchSavedTerms();
+      fetchQuizzes();
+    }
+    const handleGlossaryUpdated = () => {
+      if (session) fetchSavedTerms();
+    };
+    window.addEventListener('glossaryUpdated', handleGlossaryUpdated);
+    return () => window.removeEventListener('glossaryUpdated', handleGlossaryUpdated);
+  }, [session]);
+
+  const fetchQuizzes = async () => {
+    if (!session) return;
+    const { data } = await supabase.from('quiz_attempts').select('quiz_id, is_correct').eq('user_id', session.user.id);
+    if (data) {
+      const state = {};
+      data.forEach(d => {
+        if (d.is_correct) state[d.quiz_id] = 'success';
+      });
+      setCompletedQuizzes(state);
+    }
+  };
+
+  const fetchSavedTerms = async () => {
+    const { data, error } = await supabase
+      .from('saved_terms')
+      .select('term')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+      
+    if (data && !error) {
+      setSavedTerms(data.map(d => d.term));
+    }
+  };
 
   const handleQuiz = async (moduleId, isCorrect) => {
     if (completedQuizzes[moduleId]) return;
     
-    setCompletedQuizzes(prev => ({...prev, [moduleId]: true}));
+    setCompletedQuizzes(prev => ({...prev, [moduleId]: isCorrect ? 'success' : 'danger'}));
 
     if (isCorrect) {
       setFeedback({ moduleId, type: 'success', text: '정답입니다! 🎉' });
@@ -159,94 +206,193 @@ export default function Study({ session }) {
         </h2>
         <p className="text-text-muted text-lg">경매의 필수 지식을 익히고 퀴즈를 풀어 레벨을 올리세요!</p>
       </div>
+
+      {/* Category Selection UI */}
+      <div className="flex gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => cat.active && setSelectedCategory(cat.id)}
+            disabled={!cat.active}
+            className={`whitespace-nowrap px-6 py-3 rounded-xl font-bold transition-all ${
+              selectedCategory === cat.id
+                ? 'bg-accent-blue text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                : cat.active
+                  ? 'bg-bg-card border border-gray-800 text-text-muted hover:text-white hover:border-gray-500'
+                  : 'bg-gray-900/50 border border-gray-800/50 text-gray-600 cursor-not-allowed'
+            }`}
+          >
+            {cat.label} {!cat.active && <span className="text-xs font-normal ml-1 bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">준비중</span>}
+          </button>
+        ))}
+      </div>
       
-      <div className="grid gap-6">
-        {modules.map((mod) => {
-          const isActive = activeModule === mod.id;
-          const isCompleted = completedQuizzes[mod.id] && feedback.type === 'success';
+      {selectedCategory === 'auction' && (
+        <>
+          {/* Core Terms Section */}
+          <div className="mb-10 bg-bg-card border border-gray-800 rounded-2xl p-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="text-accent-blue">💡</span> 미리 알면 좋을 핵심 용어
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {coreTerms.map((term, idx) => (
+                <button
+                  key={idx}
+                  className="glossary-term px-4 py-2 bg-[#1a1a24] border border-gray-700 hover:border-accent-blue hover:text-accent-blue rounded-full text-sm transition-colors"
+                >
+                  #{term}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          return (
-            <div key={mod.id} className={`bg-bg-card border ${isActive ? 'border-accent-blue shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-gray-800'} rounded-2xl overflow-hidden transition-all duration-300`}>
-              {/* Card Header */}
-              <div 
-                className="p-6 flex items-center justify-between cursor-pointer hover:bg-gray-800/30"
-                onClick={() => setActiveModule(isActive ? null : mod.id)}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isCompleted ? 'bg-success/20 text-success' : 'bg-bg-main text-white'}`}>
-                    {isCompleted ? '✅' : mod.icon}
-                  </div>
-                  <h3 className={`text-xl font-bold ${isActive ? 'text-accent-blue' : 'text-white'}`}>{mod.title}</h3>
-                </div>
-                <div className="text-gray-500">
-                  <svg className={`w-6 h-6 transform transition-transform duration-300 ${isActive ? 'rotate-180 text-accent-blue' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-              </div>
+          <div className="grid gap-6 mb-12">
+            <h3 className="text-2xl font-bold mb-2">📚 경매 강의 리스트</h3>
+            {modules.map((mod) => {
+              const isActive = activeModule === mod.id;
+              const isCompleted = completedQuizzes[mod.id] === 'success';
 
-              {/* Card Body (Expandable) */}
-              {isActive && (
-                <div className="p-6 pt-0 border-t border-gray-800 mt-4 bg-gray-900/20">
-                  <div className="text-lg leading-relaxed text-text-muted mt-6 mb-8 px-2">
-                    {mod.content}
-                  </div>
-
-                  {/* Quiz Section */}
-                  <div className="bg-[#1a1a24] p-8 border border-gray-800 rounded-xl">
-                    <h4 className="text-lg font-bold mb-2 flex items-center gap-2">
-                      <span className="text-accent-blue">Q.</span> 실전 확인 퀴즈
-                    </h4>
-                    <p className="mb-6 text-white font-medium">{mod.quiz.question}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {mod.quiz.options.map(opt => {
-                        const isSelected = completedQuizzes[mod.id];
-                        const showSuccess = isSelected && opt.isCorrect;
-                        const showDanger = isSelected && !opt.isCorrect && feedback.type === 'danger'; // Simplistic feedback logic
-                        
-                        let btnClass = 'bg-bg-card border-gray-700 hover:border-accent-blue hover:bg-gray-800 text-text-muted hover:text-white';
-                        if (isSelected) {
-                          if (opt.isCorrect) btnClass = 'bg-success/20 border-success text-white shadow-[0_0_15px_rgba(0,200,81,0.2)]';
-                          else btnClass = 'bg-bg-main border-gray-800 opacity-40 cursor-not-allowed';
-                        }
-
-                        return (
-                          <button 
-                            key={opt.id}
-                            onClick={() => handleQuiz(mod.id, opt.isCorrect)}
-                            disabled={completedQuizzes[mod.id]}
-                            className={`p-4 rounded-xl border-2 text-left font-medium transition-all duration-300 ${btnClass}`}
-                          >
-                            {opt.text}
-                          </button>
-                        );
-                      })}
+              return (
+                <div key={mod.id} className={`bg-bg-card border ${isActive ? 'border-accent-blue shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-gray-800'} rounded-2xl overflow-hidden transition-all duration-300`}>
+                  {/* Card Header */}
+                  <div 
+                    className="p-6 flex items-center justify-between cursor-pointer hover:bg-gray-800/30"
+                    onClick={() => setActiveModule(isActive ? null : mod.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isCompleted ? 'bg-success/20 text-success' : 'bg-bg-main text-white'}`}>
+                        {isCompleted ? '✅' : mod.icon}
+                      </div>
+                      <h3 className={`text-xl font-bold ${isActive ? 'text-accent-blue' : 'text-white'}`}>{mod.title}</h3>
                     </div>
+                    <div className="text-gray-500">
+                      <svg className={`w-6 h-6 transform transition-transform duration-300 ${isActive ? 'rotate-180 text-accent-blue' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
 
-                    {/* Feedback Alert */}
-                    {completedQuizzes[mod.id] && feedback.moduleId === mod.id && (
-                      <div className={`mt-6 p-5 rounded-xl border animate-fade-in-up flex flex-col gap-3 ${feedback.type === 'success' ? 'bg-success/10 border-success/50 text-success' : 'bg-danger/10 border-danger/50 text-danger'}`}>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-lg">{feedback.text}</span>
-                          {feedback.type === 'danger' && (
-                            <button onClick={() => retry(mod.id)} className="px-4 py-1.5 bg-danger/20 hover:bg-danger text-white rounded-lg text-sm transition-colors font-semibold">
-                              다시 도전
-                            </button>
-                          )}
+                  {/* Card Body (Expandable) */}
+                  {isActive && (
+                    <div className="p-6 pt-0 border-t border-gray-800 mt-4 bg-gray-900/20">
+                      <div className="text-lg leading-relaxed text-text-muted mt-6 mb-8 px-2">
+                        {mod.content}
+                      </div>
+
+                      {/* Quiz Section */}
+                      <div className="bg-[#1a1a24] p-8 border border-gray-800 rounded-xl">
+                        <h4 className="text-lg font-bold mb-2 flex items-center gap-2">
+                          <span className="text-accent-blue">Q.</span> 실전 확인 퀴즈
+                        </h4>
+                        <p className="mb-6 text-white font-medium">{mod.quiz.question}</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {mod.quiz.options.map(opt => {
+                            const isSelected = completedQuizzes[mod.id];
+                            const showSuccess = isSelected && opt.isCorrect;
+                            const showDanger = isSelected && !opt.isCorrect && feedback.type === 'danger';
+                            
+                            let btnClass = 'bg-bg-card border-gray-700 hover:border-accent-blue hover:bg-gray-800 text-text-muted hover:text-white';
+                            if (isSelected) {
+                              if (completedQuizzes[mod.id] === 'success' && opt.isCorrect) {
+                                btnClass = 'bg-success/20 border-success text-white shadow-[0_0_15px_rgba(0,200,81,0.2)]';
+                              } else {
+                                btnClass = 'bg-bg-main border-gray-800 opacity-40 cursor-not-allowed';
+                              }
+                            }
+
+                            return (
+                              <button 
+                                key={opt.id}
+                                onClick={() => handleQuiz(mod.id, opt.isCorrect)}
+                                disabled={completedQuizzes[mod.id]}
+                                className={`p-4 rounded-xl border-2 text-left font-medium transition-all duration-300 ${btnClass}`}
+                              >
+                                {opt.text}
+                              </button>
+                            );
+                          })}
                         </div>
-                        {feedback.type === 'success' && (
-                          <div className="text-sm text-text-muted bg-black/20 p-4 rounded-lg border border-success/20">
-                            <strong>💡 해설:</strong> {mod.quiz.explanation}
+
+                        {/* Feedback Alert */}
+                        {(completedQuizzes[mod.id] === 'danger' && feedback.moduleId === mod.id) && (
+                          <div className="mt-6 p-5 rounded-xl border animate-fade-in-up flex flex-col gap-3 bg-danger/10 border-danger/50 text-danger">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-lg">{feedback.text}</span>
+                              <button onClick={() => retry(mod.id)} className="px-4 py-1.5 bg-danger/20 hover:bg-danger text-white rounded-lg text-sm transition-colors font-semibold">
+                                다시 도전
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {(completedQuizzes[mod.id] === 'success') && (
+                          <div className="mt-6 p-5 rounded-xl border animate-fade-in-up flex flex-col gap-3 bg-success/10 border-success/50 text-success">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-lg">정답입니다! 🎉</span>
+                            </div>
+                            <div className="text-sm text-text-muted bg-black/20 p-4 rounded-lg border border-success/20">
+                              <strong>💡 해설:</strong> {mod.quiz.explanation}
+                            </div>
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+
+            {/* Success Banner when all modules are completed */}
+            {Object.values(completedQuizzes).filter(v => v === 'success').length === modules.length && (
+              <div className="mt-6 p-8 bg-gradient-to-r from-accent-blue/20 to-purple-600/20 border border-accent-blue/50 rounded-2xl text-center shadow-[0_0_30px_rgba(59,130,246,0.15)] animate-fade-in-up">
+                <h3 className="text-2xl font-bold text-white mb-2">🎉 경매 기초 완주!</h3>
+                <p className="text-text-muted mb-6">모든 기초 개념을 마스터하셨습니다. 나의 성장 기록을 확인해 볼까요?</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button 
+                    onClick={() => {
+                      const scrollContainer = document.querySelector('.overflow-y-auto');
+                      if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} 
+                    className="w-full sm:w-auto px-8 py-3 rounded-full font-bold bg-[#1a1a24] border border-gray-700 text-text-muted hover:text-white hover:border-gray-500 transition-colors"
+                  >
+                    🔄 다시 복습하기
+                  </button>
+                  <button 
+                    onClick={() => window.location.href = '/profile'} 
+                    className="w-full sm:w-auto btn-primary inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full font-bold"
+                  >
+                    내 성장 확인하기 <span>📈</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* My Saved Words Section */}
+          <div className="bg-[#121214] border border-accent-blue/30 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 to-transparent pointer-events-none"></div>
+            <h3 className="text-xl font-bold mb-2 flex items-center gap-2 relative z-10">
+              <span className="text-accent-blue">🔖</span> 내가 저장한 단어
+            </h3>
+            <p className="text-text-muted text-sm mb-4 relative z-10">강의를 보며 저장한 단어들을 모아볼 수 있습니다.</p>
+            
+            {savedTerms.length > 0 ? (
+              <div className="flex flex-wrap gap-2 relative z-10">
+                {savedTerms.map((term, idx) => (
+                  <button
+                    key={idx}
+                    className="glossary-term px-3 py-1.5 bg-bg-main border border-accent-blue/50 text-accent-light hover:bg-accent-blue hover:text-white rounded-lg text-sm transition-colors shadow-[0_2px_8px_rgba(59,130,246,0.15)]"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-gray-500 bg-black/20 rounded-xl relative z-10">
+                아직 저장한 단어가 없습니다.<br/>단어를 클릭하고 🔖 아이콘을 눌러보세요!
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -8,13 +8,21 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!email || !password) {
+      setError('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email: email, password: password });
     if (error) setError(error.message);
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (!email || !password) {
+      setError('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    const { data, error } = await supabase.auth.signUp({ email: email, password: password });
     if (error) {
       setError(error.message);
     } else if (data.user) {

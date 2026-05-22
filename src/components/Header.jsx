@@ -16,7 +16,7 @@ export default function Header({ session, toggleMenu }) {
         );
       case '/study': return '개념 배움터';
       case '/bid': return '가상 입찰 훈련소';
-      case '/profile': return '내 프로필';
+      case '/profile': return '나의 학습현황';
       default: return '부메이트';
     }
   };
