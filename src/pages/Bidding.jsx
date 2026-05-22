@@ -312,7 +312,6 @@ export default function Bidding({ session }) {
 
     const { error: insertError } = await supabase.from('bid_history').insert([{
       user_id: session.user.id,
-      property_id: selectedProperty.id,
       item_name: selectedProperty.name,
       bid_amount: bidAmount,
       winning_bid: selectedProperty.virtual_winning_bid,
