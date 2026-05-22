@@ -6,6 +6,21 @@ export default function Bidding({ session }) {
   const [bidInput, setBidInput] = useState({});
   const [result, setResult] = useState(null);
 
+  // 간단한 흔들림 애니메이션용 CSS 주입
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+      .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   useEffect(() => {
     fetchProperties();
   }, []);
@@ -16,8 +31,30 @@ export default function Bidding({ session }) {
       setProperties(data);
     } else {
       setProperties([
-        { id: 1, name: '서울 서초구 아파트 34평', appraised_value: 1500000000, min_bid: 1200000000, virtual_winning_bid: 1250000000, registry_status: '근저당 1건, 안전', explanation: '소멸되는 권리만 있으므로 낙찰 시 권리상 하자가 없는 안전한 물건입니다.' },
-        { id: 2, name: '경기 성남시 오피스텔', appraised_value: 300000000, min_bid: 210000000, virtual_winning_bid: 215000000, registry_status: '임차인 대항력 있음 (주의)', explanation: '대항력 있는 임차인의 보증금을 인수해야 하므로 이를 감안하여 입찰가를 대폭 낮춰 써야 합니다.' }
+        { 
+          id: 1, 
+          name: '서울 서초구 아파트 34평형', 
+          appraised_value: 1500000000, 
+          min_bid: 1200000000, 
+          virtual_winning_bid: 1250000000, 
+          registry_status: '근저당 1건 (인수 권리 없음)', 
+          explanation: '소멸되는 권리만 있으므로 낙찰 시 권리상 하자가 없는 깨끗하고 안전한 물건입니다.',
+          badge: '안전',
+          badgeColor: 'bg-success/20 text-success border-success/30',
+          image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=500&q=80'
+        },
+        { 
+          id: 2, 
+          name: '경기 성남시 분당구 오피스텔', 
+          appraised_value: 300000000, 
+          min_bid: 210000000, 
+          virtual_winning_bid: 215000000, 
+          registry_status: '임차인 대항력 있음 (주의)', 
+          explanation: '대항력 있는 임차인의 보증금을 낙찰자가 전액 인수해야 하므로, 이를 감안하여 입찰가를 대폭 낮춰 쓰거나 입찰을 포기해야 합니다.',
+          badge: '위험',
+          badgeColor: 'bg-danger/20 text-danger border-danger/30',
+          image: 'https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=500&q=80'
+        }
       ]);
     }
   };
@@ -35,15 +72,15 @@ export default function Bidding({ session }) {
 
     if (bidAmount < property.min_bid) {
       resStatus = 'invalid';
-      resText = '최저입찰가보다 낮게 쓰셨습니다.';
+      resText = '앗! 최저입찰가보다 낮게 쓰셨습니다. (입찰 무효)';
     } else if (bidAmount >= property.virtual_winning_bid) {
       isWin = true;
       resStatus = 'win';
       profitRate = ((property.appraised_value - bidAmount) / bidAmount) * 100;
-      resText = `내부 경쟁자(${(property.virtual_winning_bid/100000000).toFixed(1)}억)를 이겼습니다! 예상 수익률: ${profitRate.toFixed(1)}%`;
+      resText = `가상의 경쟁자(${(property.virtual_winning_bid/100000000).toFixed(2)}억)를 이겼습니다! 예상 수익률: ${profitRate.toFixed(1)}%`;
     } else {
       resStatus = 'lose';
-      resText = `경쟁자가 ${(property.virtual_winning_bid/100000000).toFixed(1)}억에 낙찰받았습니다.`;
+      resText = `가상의 경쟁자가 ${(property.virtual_winning_bid/100000000).toFixed(2)}억에 낙찰받았습니다.`;
     }
 
     setResult({ property, status: resStatus, text: resText, profitRate, isWin });
@@ -69,58 +106,123 @@ export default function Bidding({ session }) {
   };
 
   return (
-    <div className="p-10 max-w-6xl mx-auto relative">
-      <h3 className="text-xl font-semibold mb-6 border-l-4 border-accent-blue pl-2">가상 입찰 훈련소</h3>
+    <div className="p-6 md:p-10 max-w-6xl mx-auto relative">
+      <div className="mb-10">
+        <h2 className="text-3xl font-extrabold mb-3 flex items-center gap-3">
+          <span className="w-2 h-8 bg-accent-blue rounded-full shadow-[0_0_10px_#3B82F6]"></span>
+          가상 입찰 훈련소
+        </h2>
+        <p className="text-text-muted text-lg">가상의 실전 매물에 직접 입찰가를 적어보고 경쟁에서 승리해 보세요!</p>
+      </div>
       
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {properties.map(p => (
-          <div key={p.id} className="card-style flex flex-col p-0 overflow-hidden">
-            <div className="h-40 bg-gradient-to-tr from-gray-900 to-gray-800 border-b border-gray-800 flex items-center justify-center text-text-muted text-lg">
-              🏢 가상 매물 #{p.id}
+          <div key={p.id} className="bg-bg-card rounded-2xl border border-gray-800 flex flex-col overflow-hidden hover:border-accent-blue/40 transition-colors shadow-lg hover:shadow-accent-blue/10">
+            {/* Property Image Thumbnail */}
+            <div 
+              className="h-56 bg-cover bg-center relative border-b border-gray-800" 
+              style={{ backgroundImage: `url('${p.image || ''}')` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+              {/* Status Badge */}
+              <div className="absolute top-4 left-4">
+                <span className={`px-4 py-1.5 rounded-lg text-sm font-bold border backdrop-blur-md ${p.badgeColor || 'bg-accent-blue/20 text-accent-blue border-accent-blue/30'}`}>
+                  {p.badge || '경매 진행중'}
+                </span>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4">
+                <h4 className="font-bold text-2xl text-white drop-shadow-md">{p.name}</h4>
+              </div>
             </div>
+            
+            {/* Property Details */}
             <div className="p-6 flex-1 flex flex-col">
-              <h4 className="font-bold text-lg mb-6">{p.name}</h4>
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-sm"><span className="text-text-muted">감정가</span><span className="font-semibold text-white">{(p.appraised_value/100000000).toFixed(1)}억 원</span></div>
-                <div className="flex justify-between text-sm"><span className="text-text-muted">최저입찰가</span><span className="font-semibold text-danger">{(p.min_bid/100000000).toFixed(1)}억 원</span></div>
-                <div className="flex justify-between text-sm"><span className="text-text-muted">등기부 현황</span><span className="text-xs text-accent-light max-w-[60%] text-right font-medium">{p.registry_status}</span></div>
+              <div className="bg-gray-900/50 rounded-xl p-4 space-y-3 mb-6 border border-gray-800/50">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-400">감정가</span>
+                  <span className="font-bold text-white text-lg">{(p.appraised_value/100000000).toFixed(1)}억 원</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-400">최저입찰가</span>
+                  <span className="font-bold text-danger text-lg">{(p.min_bid/100000000).toFixed(1)}억 원</span>
+                </div>
+                <div className="w-full h-px bg-gray-800 my-2"></div>
+                <div className="flex justify-between items-start text-sm">
+                  <span className="text-gray-400 whitespace-nowrap mr-4">등기부 현황</span>
+                  <span className={`text-right font-medium ${p.badge === '위험' ? 'text-danger' : 'text-accent-blue'}`}>
+                    {p.registry_status}
+                  </span>
+                </div>
               </div>
               
+              {/* Bid Input */}
               <div className="mt-auto flex gap-3">
-                <input 
-                  type="number" 
-                  placeholder="입찰가 (만원 단위)" 
-                  className="flex-1 bg-bg-main border border-gray-800 rounded-lg p-3 text-sm outline-none focus:border-accent-blue text-white"
-                  value={bidInput[p.id] || ''}
-                  onChange={(e) => setBidInput({...bidInput, [p.id]: e.target.value})}
-                />
-                <button onClick={() => handleBid(p)} className="bg-accent-blue text-white px-6 py-3 rounded-lg font-semibold hover:bg-accent-blueHover shadow-lg shadow-accent-blue/20">입찰하기</button>
+                <div className="relative flex-1">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">만원</span>
+                  <input 
+                    type="number" 
+                    placeholder="입찰가를 입력하세요" 
+                    className="w-full bg-bg-main border border-gray-700 rounded-xl p-4 pr-12 text-base outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue text-white transition-all"
+                    value={bidInput[p.id] || ''}
+                    onChange={(e) => setBidInput({...bidInput, [p.id]: e.target.value})}
+                  />
+                </div>
+                <button 
+                  onClick={() => handleBid(p)} 
+                  className="bg-accent-blue text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] transition-all hover:-translate-y-0.5 whitespace-nowrap"
+                >
+                  입찰하기
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Result Modal */}
       {result && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-bg-card p-10 rounded-2xl border border-gray-800 w-[500px] text-center shadow-2xl">
-            <div className="text-5xl mb-4">
-              {result.status === 'win' ? '🎉' : result.status === 'invalid' ? '❌' : '📉'}
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`bg-bg-card p-8 md:p-10 rounded-2xl border ${result.status === 'win' ? 'border-success shadow-[0_0_50px_rgba(0,200,81,0.2)]' : 'border-danger shadow-[0_0_50px_rgba(255,68,68,0.2)]'} w-full max-w-lg text-center transform transition-all ${result.status === 'win' ? 'animate-bounce' : 'animate-shake'}`} style={{ animationIterationCount: 1 }}>
+            <div className="text-6xl mb-6 drop-shadow-xl">
+              {result.status === 'win' ? '🎉' : result.status === 'invalid' ? '⚠️' : '💸'}
             </div>
-            <h3 className="text-2xl font-bold mb-3 text-white">{result.status === 'win' ? '낙찰 성공!' : '패찰'}</h3>
-            <p className="text-text-muted mb-6 text-sm">{result.text}</p>
+            <h3 className={`text-3xl font-extrabold mb-4 ${result.status === 'win' ? 'text-success' : 'text-danger'}`}>
+              {result.status === 'win' ? '축하합니다! 낙찰 성공' : result.status === 'invalid' ? '입찰 무효' : '아쉬운 패찰'}
+            </h3>
+            <p className="text-white text-lg font-medium mb-8 leading-relaxed break-keep">{result.text}</p>
             
-            {result.status === 'lose' && (
-              <div className="bg-bg-main p-5 rounded-lg mb-8 text-sm text-left border border-gray-800">
-                <strong className="text-accent-blue block mb-2">오답 노트 해설:</strong> 
-                <span className="text-text-muted leading-relaxed">{result.property.explanation}</span>
+            {/* 오답 노트 / 해설 */}
+            {(result.status === 'lose' || result.status === 'invalid' || result.status === 'win') && (
+              <div className="bg-bg-main p-5 rounded-xl mb-8 text-sm text-left border border-gray-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">💡</span>
+                  <strong className="text-accent-blue text-base">전문가의 피드백</strong> 
+                </div>
+                <span className="text-gray-300 leading-relaxed block mt-2">
+                  {result.property.explanation}
+                </span>
+                {result.status === 'win' && result.property.badge === '위험' && (
+                  <div className="mt-3 text-danger font-bold">
+                    ⚠️ 주의: 대항력 있는 세입자의 보증금을 물어주게 되어 오히려 손해를 볼 수 있습니다!
+                  </div>
+                )}
               </div>
             )}
 
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => setResult(null)} className="btn-primary w-1/2">확인</button>
-              {result.status === 'lose' && (
-                <button onClick={() => setResult(null)} className="w-1/2 py-3 border border-gray-700 rounded-lg hover:bg-bg-main text-sm font-semibold text-text-muted hover:text-white transition-all">다시 입찰</button>
+            <div className="flex gap-4 justify-center">
+              <button 
+                onClick={() => setResult(null)} 
+                className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-4 rounded-xl font-bold transition-all border border-gray-700"
+              >
+                닫기
+              </button>
+              {(result.status === 'lose' || result.status === 'invalid') && (
+                <button 
+                  onClick={() => setResult(null)} 
+                  className="flex-1 bg-accent-blue hover:bg-blue-600 text-white py-4 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                >
+                  재도전
+                </button>
               )}
             </div>
           </div>

@@ -13,6 +13,7 @@ import { supabase } from './lib/supabaseClient';
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -37,10 +38,16 @@ function App() {
       <Routes>
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
         <Route path="*" element={
-          <div className="flex h-screen overflow-hidden bg-bg-main text-text-main font-['Inter']">
-            <Sidebar onLogout={() => supabase.auth.signOut()} session={session} />
+          <div className="flex h-screen overflow-hidden bg-bg-main text-text-main font-['Inter'] relative">
+            {isMobileMenuOpen && (
+              <div 
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+              ></div>
+            )}
+            <Sidebar onLogout={() => supabase.auth.signOut()} session={session} isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
             <div className="flex-1 flex flex-col relative overflow-hidden">
-              <Header session={session} />
+              <Header session={session} toggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
               <div className="flex-1 overflow-y-auto">
                 <Routes>
                   <Route path="/" element={<Home session={session} />} />

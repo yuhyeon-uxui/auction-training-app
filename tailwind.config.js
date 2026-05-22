@@ -25,6 +25,19 @@ export default {
         },
         danger: '#ff4444',
         success: '#00c851'
+      },
+      fontSize: {
+        '6xl': ['64px', { lineHeight: '1.13' }],
+        '5xl': ['48px', { lineHeight: '1.17' }],
+        '4xl': ['40px', { lineHeight: '1.2' }],
+        '3xl': ['32px', { lineHeight: '1.5' }],
+        '2xl': ['24px', { lineHeight: '1.5' }],
+        'xl':  ['20px', { lineHeight: '1.5' }],
+        'lg':  ['18px', { lineHeight: '1.56' }],
+        'base':['16px', { lineHeight: '1.63' }],
+        'sm':  ['14px', { lineHeight: '1.57' }],
+        'xs':  ['12px', { lineHeight: '1.5' }],
+        'xxs': ['11px', { lineHeight: '1.64' }],
       }
     },
   },
