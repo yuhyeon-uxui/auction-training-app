@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Study from './pages/Study';
 import Bidding from './pages/Bidding';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 
@@ -54,6 +55,7 @@ function App() {
                   <Route path="/study" element={session ? <Study session={session} /> : <Navigate to="/login" />} />
                   <Route path="/bid" element={session ? <Bidding session={session} /> : <Navigate to="/login" />} />
                   <Route path="/profile" element={session ? <Profile session={session} /> : <Navigate to="/login" />} />
+                  <Route path="/settings" element={session ? <Settings session={session} /> : <Navigate to="/login" />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>

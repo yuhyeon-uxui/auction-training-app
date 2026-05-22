@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function Header({ session, toggleMenu }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   
   const getPageTitle = () => {
@@ -62,14 +63,21 @@ export default function Header({ session, toggleMenu }) {
             )}
           </div>
         )}
-        <div className={`flex items-center gap-3 ${session ? 'pl-5 border-l border-gray-800' : ''}`}>
-          <div className="text-sm font-medium hidden sm:block text-right">
-            <div className="text-white">{session?.user?.email?.split('@')[0] || '비회원'}</div>
-            <div className="text-xs text-text-muted">{session ? '예비 입찰자' : '로그인이 필요합니다'}</div>
+        <div 
+          onClick={() => session && navigate('/settings')}
+          className={`flex items-center gap-3 ${session ? 'pl-5 border-l border-gray-800 cursor-pointer group' : ''}`}
+        >
+          <div className="text-sm font-medium hidden sm:block text-right transition-colors group-hover:text-accent-light">
+            <div className="text-white group-hover:text-accent-light">{session?.user?.user_metadata?.nickname || session?.user?.email?.split('@')[0] || '비회원'}</div>
+            <div className="text-xs text-text-muted">예비 입찰자</div>
           </div>
           {session ? (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent-blue to-accent-light flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(59,130,246,0.4)] cursor-pointer hover:scale-105 transition-transform">
-              {session.user.email.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent-blue to-accent-light flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(59,130,246,0.4)] group-hover:scale-105 transition-transform overflow-hidden">
+              {session.user.user_metadata?.avatar_url ? (
+                <img src={session.user.user_metadata.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                (session.user.user_metadata?.nickname || session.user.email).charAt(0).toUpperCase()
+              )}
             </div>
           ) : (
              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-text-muted border border-gray-700">
