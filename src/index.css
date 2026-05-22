@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Prevents outer native scrollbar */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
 @layer components {
   .btn-primary {
     @apply w-full py-3 bg-accent-blue text-white rounded-lg font-semibold hover:bg-accent-blueHover transition-all;

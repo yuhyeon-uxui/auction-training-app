@@ -45,6 +45,72 @@ const modules = [
       ],
       explanation: '정답은 2번입니다. 대항력의 발생 요건은 주택의 인도(점유)와 주민등록(전입신고)입니다. 확정일자는 배당 시 우선변제를 받기 위한 요건입니다.'
     }
+  },
+  {
+    id: 3,
+    title: '3강. 경매의 꽃: 명도',
+    icon: '🗝️',
+    content: (
+      <>
+        <p className="mb-4">낙찰 후 가장 부담스러워하는 과정이 바로 <span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">명도</span>입니다. 점유자를 내보내는 일련의 과정을 의미합니다.</p>
+        <p className="mb-4">대부분의 명도는 협상으로 원만하게 마무리되지만, 최악의 경우 법원의 강제집행을 활용할 수도 있습니다.</p>
+        <p>명도를 원활하게 하기 위해서는 낙찰 직후 신속하게 점유자와 소통을 시작하고 이사비 등의 협상 카드를 적절히 사용하는 것이 중요합니다.</p>
+      </>
+    ),
+    quiz: {
+      question: '명도 시 점유자와 협상이 결렬되었을 때 법원에 신청하여 강제로 점유를 이전받는 제도는 무엇일까요?',
+      options: [
+        { id: 1, text: '명도소송', isCorrect: false },
+        { id: 2, text: '부동산 인도명령', isCorrect: true },
+        { id: 3, text: '가압류', isCorrect: false },
+        { id: 4, text: '경매개시결정', isCorrect: false }
+      ],
+      explanation: '정답은 2번입니다. 대항력 없는 점유자의 경우, 낙찰 대금 납부 후 6개월 이내에 비교적 빠르고 간편한 인도명령 제도를 활용할 수 있습니다.'
+    }
+  },
+  {
+    id: 4,
+    title: '4강. 입찰 전 필수 확인: 매각물건명세서',
+    icon: '📄',
+    content: (
+      <>
+        <p className="mb-4">경매 법원에서 제공하는 공식 문서 중 가장 중요한 것이 바로 <strong>매각물건명세서</strong>입니다.</p>
+        <p className="mb-4">이 문서에는 <span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">최저입찰가</span>, 임차인의 전입일자, 확정일자, 배당요구 여부 등 권리분석의 핵심 정보가 모두 담겨 있습니다.</p>
+        <p>매각기일 1주일 전부터 법원에 비치되며, 대법원 법원경매정보 사이트에서도 확인할 수 있습니다.</p>
+      </>
+    ),
+    quiz: {
+      question: '다음 중 매각물건명세서에 기재되지 않는 사항은 무엇일까요?',
+      options: [
+        { id: 1, text: '최저매각가격', isCorrect: false },
+        { id: 2, text: '임차인의 배당요구 여부', isCorrect: false },
+        { id: 3, text: '향후 부동산 가격 상승 예측치', isCorrect: true },
+        { id: 4, text: '매각으로 소멸되지 않는 권리', isCorrect: false }
+      ],
+      explanation: '정답은 3번입니다. 매각물건명세서는 객관적인 권리관계와 현황만을 기재할 뿐, 향후 시세 예측과 같은 주관적 정보는 담지 않습니다.'
+    }
+  },
+  {
+    id: 5,
+    title: '5강. 자금 조달 계획: 경락잔금대출',
+    icon: '💰',
+    content: (
+      <>
+        <p className="mb-4">경매로 <span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">낙찰</span>받은 후, 매각대금 잔금을 납부하기 위해 활용하는 대출이 바로 경락잔금대출입니다.</p>
+        <p className="mb-4">일반 주택담보대출과 비슷하지만, <span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">감정가</span>와 낙찰가 중 낮은 금액을 기준으로 한도가 산정되는 특징이 있습니다.</p>
+        <p><span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">LTV</span>, <span className="glossary-term text-accent-light underline decoration-dotted cursor-pointer hover:text-accent-blue transition-colors">DSR</span> 규제가 동일하게 적용되므로, 입찰 전 본인의 대출 가능 금액을 꼼꼼히 확인해야 합니다.</p>
+      </>
+    ),
+    quiz: {
+      question: '다음 중 경락잔금대출의 한도를 산정하는 일반적인 기준은 무엇일까요?',
+      options: [
+        { id: 1, text: '무조건 감정가의 100%', isCorrect: false },
+        { id: 2, text: '무조건 낙찰가의 100%', isCorrect: false },
+        { id: 3, text: '낙찰가의 80% 또는 감정가의 70% 중 낮은 금액 (대략적 기준)', isCorrect: true },
+        { id: 4, text: '입찰자의 연소득의 10배', isCorrect: false }
+      ],
+      explanation: '정답은 3번입니다. 대출 한도는 규제에 따라 다르지만, 통상 낙찰가의 80%와 감정가의 70% 중 낮은 금액을 기준으로 합니다.'
+    }
   }
 ];
 

@@ -54,6 +54,42 @@ export default function Bidding({ session }) {
           badge: '위험',
           badgeColor: 'bg-danger/20 text-danger border-danger/30',
           image: 'https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=500&q=80'
+        },
+        { 
+          id: 3, 
+          name: '서울 강남구 역삼동 상가', 
+          appraised_value: 2000000000, 
+          min_bid: 1600000000, 
+          virtual_winning_bid: 1750000000, 
+          registry_status: '가압류 2건, 선순위 전세권 (배당요구함)', 
+          explanation: '선순위 전세권자가 배당을 요구했으므로 매각으로 소멸됩니다. 수익률 분석에 집중하면 되는 물건입니다.',
+          badge: '보통',
+          badgeColor: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+          image: 'https://images.unsplash.com/photo-1574958269340-fa927503f3dd?auto=format&fit=crop&w=500&q=80'
+        },
+        { 
+          id: 4, 
+          name: '인천 연수구 송도동 아파트 40평형', 
+          appraised_value: 900000000, 
+          min_bid: 630000000, 
+          virtual_winning_bid: 780000000, 
+          registry_status: '유치권 신고 있음', 
+          explanation: '유치권이 신고되어 있으나, 현장 조사 결과 성립 요건을 갖추지 못한 허위 유치권일 확률이 높습니다. 정확한 조사가 필요합니다.',
+          badge: '주의',
+          badgeColor: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
+          image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=500&q=80'
+        },
+        { 
+          id: 5, 
+          name: '부산 해운대구 우동 빌라', 
+          appraised_value: 250000000, 
+          min_bid: 160000000, 
+          virtual_winning_bid: 195000000, 
+          registry_status: '소유자 점유 중 (인수 권리 없음)', 
+          explanation: '권리상 하자가 전혀 없고 소유자가 점유 중이므로, 인도명령을 통해 수월하게 명도가 가능한 우량 물건입니다.',
+          badge: '안전',
+          badgeColor: 'bg-success/20 text-success border-success/30',
+          image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=80'
         }
       ]);
     }

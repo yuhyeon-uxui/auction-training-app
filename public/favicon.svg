@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/> <!-- accent-blue -->
+      <stop offset="100%" stop-color="#A855F7"/> <!-- purple-500 -->
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with border radius -->
+  <rect width="256" height="256" rx="64" fill="url(#bgGradient)"/>
+  
+  <!-- Building Icon -->
+  <g transform="translate(64, 64) scale(5.33)" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 22h20"/>
+    <path d="M17 2v20"/>
+    <path d="M7 22V6a2 2 0 0 1 2-2h8"/>
+    <path d="M11 22v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/>
+    <path d="M11 10h2"/>
+    <path d="M11 14h2"/>
+  </g>
+</svg>
