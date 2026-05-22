@@ -20,10 +20,22 @@ export default function Profile({ session }) {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch Profile
-      const { data: prof, error: profError } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-      if (profError) console.error("Profile error:", profError);
+      // Run queries in parallel to drastically improve loading speed
+      const [profRes, bidRes, quizRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', session.user.id).single(),
+        supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true }),
+        supabase.from('quiz_attempts').select('created_at').eq('user_id', session.user.id)
+      ]);
+
+      const prof = profRes.data;
+      const bidData = bidRes.data || [];
+      const quizData = quizRes.data || [];
+
+      if (profRes.error) console.error("Profile error:", profRes.error);
+      if (bidRes.error) console.error("Bid fetch error:", bidRes.error);
+      if (quizRes.error) console.error("Quiz fetch error:", quizRes.error);
       
+      // 1. Set Profile
       if (prof) {
         setProfile(prof);
         setLevelData(prof.level_history || [{ level: 1, date: prof.created_at }]);
@@ -32,60 +44,48 @@ export default function Profile({ session }) {
         setLevelData([{ level: 1, date: new Date().toISOString() }]);
       }
 
-      // 2. Fetch Bids for Accuracy, WinRate, and List
-      const { data: bidData, error: bidError } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true });
-      if (bidError) console.error("Bid fetch error:", bidError);
+      // 2. Prepare Bids Data
+      setBids([...bidData].reverse());
+      
+      const acc = bidData.slice(-10).map((b, i) => ({
+        name: `${i+1}회`,
+        accuracy: b.accuracy_rate ? parseFloat(b.accuracy_rate.toFixed(1)) : 0
+      }));
+      setAccuracyData(acc);
 
-      if (bidData) {
-        // Reverse for list display (newest first)
-        setBids([...bidData].reverse());
+      let wins = 0;
+      const wr = bidData.map((b, i) => {
+        if (b.result === 'win') wins++;
+        return {
+          date: new Date(b.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+          rate: Math.round((wins / (i + 1)) * 100)
+        };
+      });
+      setWinRateData(wr);
 
-        // Prepare Accuracy Data (last 10)
-        const acc = bidData.slice(-10).map((b, i) => ({
-          name: `${i+1}회`,
-          accuracy: b.accuracy_rate ? parseFloat(b.accuracy_rate.toFixed(1)) : 0
-        }));
-        setAccuracyData(acc);
-
-        // Prepare Win Rate Data
-        let wins = 0;
-        const wr = bidData.map((b, i) => {
-          if (b.result === 'win') wins++;
-          return {
-            date: new Date(b.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-            rate: Math.round((wins / (i + 1)) * 100)
-          };
-        });
-        setWinRateData(wr);
-      }
-
-      // 3. Fetch Quiz for Weekly
-      const { data: quizData, error: quizError } = await supabase.from('quiz_attempts').select('created_at').eq('user_id', session.user.id);
-      if (quizError) console.error("Quiz fetch error:", quizError);
-
-      if (quizData) {
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const counts = [0,0,0,0,0,0,0];
-        // Only count last 7 days roughly
-        const now = new Date();
-        quizData.forEach(q => {
-          const d = new Date(q.created_at);
-          if ((now - d) / (1000 * 60 * 60 * 24) < 7) {
-            counts[d.getDay()]++;
-          }
-        });
-        
-        const chartData = [];
-        for(let i=6; i>=0; i--) {
-          const d = new Date(now);
-          d.setDate(now.getDate() - i);
-          chartData.push({
-            name: days[d.getDay()],
-            count: counts[d.getDay()]
-          });
+      // 3. Prepare Quiz Data
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const counts = [0,0,0,0,0,0,0];
+      const now = new Date();
+      
+      quizData.forEach(q => {
+        const d = new Date(q.created_at);
+        if ((now - d) / (1000 * 60 * 60 * 24) < 7) {
+          counts[d.getDay()]++;
         }
-        setWeeklyData(chartData);
+      });
+      
+      const chartData = [];
+      for(let i=6; i>=0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        chartData.push({
+          name: days[d.getDay()],
+          count: counts[d.getDay()]
+        });
       }
+      setWeeklyData(chartData);
+
     } catch (err) {
       console.error("Fetch data exception:", err);
       if (!profile) {
@@ -95,7 +95,7 @@ export default function Profile({ session }) {
     }
   };
 
-  if (!profile) return <div className="p-10 text-text-muted flex items-center justify-center min-h-[50vh]"><div className="animate-pulse text-xl">데이터를 불러오는 중입니다...</div></div>;
+  if (!profile) return <div className="p-10 text-text-muted flex items-center justify-center min-h-[50vh]"><div className="animate-pulse text-xl">데이터를 동기화 중입니다... (잠시만 기다려주세요)</div></div>;
 
   const achievements = [
     { id: 1, title: '첫 낙찰 달성', desc: '가상 경매 첫 승리', icon: '🏆', achieved: true },
