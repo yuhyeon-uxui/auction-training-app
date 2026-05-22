@@ -19,65 +19,79 @@ export default function Profile({ session }) {
   }, []);
 
   const fetchData = async () => {
-    // 1. Fetch Profile
-    const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-    if (prof) {
-      setProfile(prof);
-      setLevelData(prof.level_history || [{ level: 1, date: prof.created_at }]);
-    } else {
-      setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
-      setLevelData([{ level: 1, date: new Date().toISOString() }]);
-    }
-
-    // 2. Fetch Bids for Accuracy, WinRate, and List
-    const { data: bidData } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true });
-    if (bidData) {
-      // Reverse for list display (newest first)
-      setBids([...bidData].reverse());
-
-      // Prepare Accuracy Data (last 10)
-      const acc = bidData.slice(-10).map((b, i) => ({
-        name: `${i+1}회`,
-        accuracy: b.accuracy_rate ? parseFloat(b.accuracy_rate.toFixed(1)) : 0
-      }));
-      setAccuracyData(acc);
-
-      // Prepare Win Rate Data
-      let wins = 0;
-      const wr = bidData.map((b, i) => {
-        if (b.result === 'win') wins++;
-        return {
-          date: new Date(b.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-          rate: Math.round((wins / (i + 1)) * 100)
-        };
-      });
-      setWinRateData(wr);
-    }
-
-    // 3. Fetch Quiz for Weekly
-    const { data: quizData } = await supabase.from('quiz_attempts').select('created_at').eq('user_id', session.user.id);
-    if (quizData) {
-      const days = ['일', '월', '화', '수', '목', '금', '토'];
-      const counts = [0,0,0,0,0,0,0];
-      // Only count last 7 days roughly
-      const now = new Date();
-      quizData.forEach(q => {
-        const d = new Date(q.created_at);
-        if ((now - d) / (1000 * 60 * 60 * 24) < 7) {
-          counts[d.getDay()]++;
-        }
-      });
+    try {
+      // 1. Fetch Profile
+      const { data: prof, error: profError } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      if (profError) console.error("Profile error:", profError);
       
-      const chartData = [];
-      for(let i=6; i>=0; i--) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - i);
-        chartData.push({
-          name: days[d.getDay()],
-          count: counts[d.getDay()]
-        });
+      if (prof) {
+        setProfile(prof);
+        setLevelData(prof.level_history || [{ level: 1, date: prof.created_at }]);
+      } else {
+        setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+        setLevelData([{ level: 1, date: new Date().toISOString() }]);
       }
-      setWeeklyData(chartData);
+
+      // 2. Fetch Bids for Accuracy, WinRate, and List
+      const { data: bidData, error: bidError } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true });
+      if (bidError) console.error("Bid fetch error:", bidError);
+
+      if (bidData) {
+        // Reverse for list display (newest first)
+        setBids([...bidData].reverse());
+
+        // Prepare Accuracy Data (last 10)
+        const acc = bidData.slice(-10).map((b, i) => ({
+          name: `${i+1}회`,
+          accuracy: b.accuracy_rate ? parseFloat(b.accuracy_rate.toFixed(1)) : 0
+        }));
+        setAccuracyData(acc);
+
+        // Prepare Win Rate Data
+        let wins = 0;
+        const wr = bidData.map((b, i) => {
+          if (b.result === 'win') wins++;
+          return {
+            date: new Date(b.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+            rate: Math.round((wins / (i + 1)) * 100)
+          };
+        });
+        setWinRateData(wr);
+      }
+
+      // 3. Fetch Quiz for Weekly
+      const { data: quizData, error: quizError } = await supabase.from('quiz_attempts').select('created_at').eq('user_id', session.user.id);
+      if (quizError) console.error("Quiz fetch error:", quizError);
+
+      if (quizData) {
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const counts = [0,0,0,0,0,0,0];
+        // Only count last 7 days roughly
+        const now = new Date();
+        quizData.forEach(q => {
+          const d = new Date(q.created_at);
+          if ((now - d) / (1000 * 60 * 60 * 24) < 7) {
+            counts[d.getDay()]++;
+          }
+        });
+        
+        const chartData = [];
+        for(let i=6; i>=0; i--) {
+          const d = new Date(now);
+          d.setDate(now.getDate() - i);
+          chartData.push({
+            name: days[d.getDay()],
+            count: counts[d.getDay()]
+          });
+        }
+        setWeeklyData(chartData);
+      }
+    } catch (err) {
+      console.error("Fetch data exception:", err);
+      if (!profile) {
+        setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+        setLevelData([{ level: 1, date: new Date().toISOString() }]);
+      }
     }
   };
 
