@@ -20,15 +20,26 @@ export default function Home({ session }) {
 
   const fetchProfile = async () => {
     if (!session?.user?.id) return;
-    const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-    if (data) setProfile(data);
-    else setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      if (error) console.error("Profile error:", error);
+      
+      if (data) setProfile(data);
+      else setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+    } catch (err) {
+      console.error("Fetch profile exception:", err);
+      setProfile({ level: 1, quiz_completed: 0, bid_count: 0, win_count: 0, streak: 0 });
+    }
   };
 
   const fetchRecentBids = async () => {
     if (!session?.user?.id) return;
-    const { data } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(3);
-    if (data) setRecentBids(data);
+    try {
+      const { data } = await supabase.from('bid_history').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(3);
+      if (data) setRecentBids(data);
+    } catch (err) {
+      console.error("Fetch bids exception:", err);
+    }
   };
 
 
@@ -294,7 +305,7 @@ export default function Home({ session }) {
     );
   }
 
-  if (!profile) return <div className="p-10 text-text-muted animate-pulse">데이터를 불러오는 중입니다...</div>;
+  if (!profile) return <div className="p-10 text-text-muted animate-pulse">데이터를 동기화 중입니다... (잠시만 기다려주세요)</div>;
 
   const winRate = profile.bid_count > 0 ? Math.round((profile.win_count / profile.bid_count) * 100) : 0;
 
@@ -319,7 +330,7 @@ export default function Home({ session }) {
           </div>
           <div className="text-xs text-text-muted mt-3 flex justify-between">
             <span>연속 학습 스트릭</span>
-            <span className="text-white font-bold">{profile.streak || 0}일 🔥</span>
+            <span className="text-white font-bold">{session.user.user_metadata?.streak || 1}일 🔥</span>
           </div>
         </DashboardCard>
         

@@ -16,17 +16,58 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const updateStreak = async (currentSession) => {
+    if (!currentSession?.user) return;
+    const metadata = currentSession.user.user_metadata || {};
+    const lastLogin = metadata.last_login;
+    let streak = metadata.streak || 1;
+    
+    // Get today's date string in local timezone (e.g., '2026. 5. 26.')
+    const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
+    
+    if (lastLogin !== today) {
+      if (lastLogin) {
+        // Parse dates to compare day differences
+        // '2026. 5. 26.' -> replace spaces and split
+        const lastParts = lastLogin.replace(/\s/g, '').replace(/\.$/, '').split('.');
+        const todayParts = today.replace(/\s/g, '').replace(/\.$/, '').split('.');
+        if (lastParts.length === 3 && todayParts.length === 3) {
+          const lastDate = new Date(lastParts[0], lastParts[1] - 1, lastParts[2]);
+          const currDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+          const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            streak += 1;
+          } else if (diffDays > 1) {
+            streak = 1;
+          }
+        }
+      }
+      // Update supabase auth metadata
+      const { data, error } = await supabase.auth.updateUser({
+        data: { last_login: today, streak }
+      });
+      if (!error && data?.user) {
+        setSession({ ...currentSession, user: data.user });
+      }
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error) console.error('Supabase session error:', error);
       setSession(data?.session || null);
+      if (data?.session) updateStreak(data.session);
       setLoading(false);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession && _event === 'SIGNED_IN') {
+        updateStreak(newSession);
+      }
     });
 
     return () => subscription.unsubscribe();

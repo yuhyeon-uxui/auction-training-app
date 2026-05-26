@@ -124,7 +124,7 @@ export default function Profile({ session }) {
           </div>
           <div>
             <h3 className="text-2xl font-bold mb-1 text-white">Lv. {profile.level} <span className="text-accent-blue">예비 투자자</span></h3>
-            <p className="text-text-muted font-medium">현재 연속 <span className="text-white font-bold">{profile.streak || 1}일</span> 학습 중입니다! 🔥</p>
+            <p className="text-text-muted font-medium">현재 연속 <span className="text-white font-bold">{session.user.user_metadata?.streak || 1}일</span> 학습 중입니다! 🔥</p>
           </div>
         </div>
         <div className="flex gap-10 text-center relative z-10">
